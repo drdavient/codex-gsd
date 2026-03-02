@@ -6,8 +6,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 RUN npm install -g @openai/codex
 
-RUN npx -y get-shit-done-cc@latest --codex --global
-
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
