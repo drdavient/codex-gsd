@@ -4,13 +4,14 @@ services:
     container_name: codex-gsd
     tty: true
     stdin_open: true
-    
+
     user: "${UID}:${GID}"
-    
+
+    environment:
+      - CODEX_HOME=/workspace/.codex
+
     volumes:
-      # Persist Codex auth + config
-      - codex-home:/home/codex
-      # Mount your Logseq vault
+      - codex-home:/workspace/.codex
       - ${LOGSEQ_VAULT_PATH}:/workspace
 
     working_dir: /workspace

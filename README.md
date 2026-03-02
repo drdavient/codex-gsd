@@ -87,15 +87,19 @@ Authentication state is stored in the named Docker volume, so subsequent runs wi
 
 ## Start Codex
 
-```
+```bash
 docker compose run --rm codex
 ```
 
 Inside the container:
 
+```bash
+codex -- --approval-mode=never
 ```
-codex
-```
+
+The extra `--` ensures the approval flag is forwarded correctly.
+
+Using `--approval-mode=never` allows Codex to execute Bash, Git, and other actions without interactive confirmation, which is recommended when running GSD workflows.
 
 The working directory is your mounted Logseq vault.
 
