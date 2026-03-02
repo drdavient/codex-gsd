@@ -8,13 +8,13 @@ services:
     user: "${UID}:${GID}"
 
     environment:
-      - CODEX_HOME=/workspace/.codex
+      - CODEX_HOME=/codex
 
     volumes:
-      - codex-home:/workspace/.codex
       - ${LOGSEQ_VAULT_PATH}:/workspace
+      - codex-state:/codex
 
     working_dir: /workspace
 
 volumes:
-  codex-home:
+  codex-state:

@@ -6,7 +6,7 @@ This repository provides a minimal Docker runtime for:
 - get-shit-done (GSD)
 - Mounting a Logseq vault as a working directory
 
-It contains no application logic
+It contains no application logic.
 Its sole purpose is to provide a reproducible Codex + GSD execution environment.
 
 ---
@@ -18,6 +18,19 @@ Its sole purpose is to provide a reproducible Codex + GSD execution environment.
 - `.env` (local only, not committed)
 
 It does not contain your Logseq vault.
+
+---
+
+## Architecture
+
+The container:
+
+- Runs as your host UID/GID to avoid permission issues
+- Mounts your Logseq vault at `/workspace`
+- Stores Codex state in a Docker named volume mounted at `/codex`
+- Uses `CODEX_HOME=/codex` so runtime user and home directory never conflict
+
+This avoids permission mismatches and makes the setup portable across machines.
 
 ---
 
@@ -35,6 +48,16 @@ Create a `.env` file:
 
 ```
 LOGSEQ_VAULT_PATH=/absolute/path/to/your/logseq/vault
+UID=1000
+GID=1000
+COMPOSE_PROJECT_NAME=codex-gsd
+```
+
+Set `UID` and `GID` to match your host user:
+
+```
+id -u
+id -g
 ```
 
 Do not commit this file.
@@ -49,7 +72,7 @@ docker compose build
 
 ---
 
-## First Run: Web Authentication
+## First Run: Device Authentication
 
 Instead of relying on the default OAuth callback, which often fails inside containers, use device code authentication.
 
@@ -79,27 +102,25 @@ Visit the URL in your host browser, paste the code, and complete the login.
 - Enable multi-factor authentication (2FA)
 - Enable Device Code Authorisation for Codex if your workspace restricts device-code flows
 
-This allows Codex CLI to authenticate without relying on a `localhost:1455` callback, which does not work reliably inside Docker.
-
-Authentication state is stored in the named Docker volume, so subsequent runs will reuse the session.
+Authentication state is stored in the `codex-state` Docker volume, so subsequent runs will reuse the session.
 
 ---
 
 ## Start Codex
 
-```bash
+```
 docker compose run --rm codex
 ```
 
 Inside the container:
 
-```bash
+```
 codex -- --approval-mode=never
 ```
 
 The extra `--` ensures the approval flag is forwarded correctly.
 
-Using `--approval-mode=never` allows Codex to execute Bash, Git, and other actions without interactive confirmation, which is recommended when running GSD workflows.
+Using `--approval-mode=never` allows Codex and GSD to execute Bash, Git, and other actions without interactive confirmation.
 
 The working directory is your mounted Logseq vault.
 
@@ -117,15 +138,46 @@ gsd-help
 
 GSD extends Codex behaviour and uses the same authentication session.
 
+GSD stores planning state in a `.planning/` directory in the project root.
+
 ---
 
+## Safety Model
+
+Codex runs inside Docker.
+
+It can modify anything under `/workspace` (your mounted vault).
+It cannot modify your wider system unless you mount additional host paths.
+
+Recommended safeguards:
+
+- Keep your vault under Git
+- Commit before running autonomous workflows
+- Do not mount your home directory or Docker socket
+- Mount only what you are willing to let the agent modify
+
+---
+
+## Volumes
+
+- `/workspace` → your Logseq vault (bind mount)
+- `/codex` → Docker named volume for Codex state
+
+Inspect volumes:
+
+```
+docker volume ls
+docker volume inspect codex-state
+```
 
 ---
 
 ## Removal
 
-To remove persisted Codex authentication:
+To remove persisted Codex authentication and state:
 
 ```
-docker volume rm codex-gsd_codex-home
+docker compose down -v
 ```
+
+This removes the `codex-state` volume.
