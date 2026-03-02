@@ -4,7 +4,9 @@ services:
     container_name: codex-gsd
     tty: true
     stdin_open: true
-
+    
+    user: "${UID}:${GID}"
+    
     volumes:
       # Persist Codex auth + config
       - codex-home:/home/codex
