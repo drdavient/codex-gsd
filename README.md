@@ -51,19 +51,37 @@ docker compose build
 
 ## First Run: Web Authentication
 
+Instead of relying on the default OAuth callback, which often fails inside containers, use device code authentication.
+
+Run:
+
 ```
 docker compose run --rm codex
 ```
 
 Inside the container:
 
+### Device Code Login
+
 ```
-codex auth login
+codex login --device-auth
 ```
 
-Open the provided URL in your host browser and complete authentication.
+This prints:
 
-Authentication state is persisted via a named Docker volume.
+- A URL to open in your browser
+- A one-time code to paste
+
+Visit the URL in your host browser, paste the code, and complete the login.
+
+**Important:** In your ChatGPT account settings, you may need to:
+
+- Enable multi-factor authentication (2FA)
+- Enable Device Code Authorisation for Codex if your workspace restricts device-code flows
+
+This allows Codex CLI to authenticate without relying on a `localhost:1455` callback, which does not work reliably inside Docker.
+
+Authentication state is stored in the named Docker volume, so subsequent runs will reuse the session.
 
 ---
 
