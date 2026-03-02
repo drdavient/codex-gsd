@@ -1,0 +1,17 @@
+services:
+  codex:
+    build: .
+    container_name: codex-gsd
+    tty: true
+    stdin_open: true
+
+    volumes:
+      # Persist Codex auth + config
+      - codex-home:/home/codex
+      # Mount your Logseq vault
+      - ${LOGSEQ_VAULT_PATH}:/workspace
+
+    working_dir: /workspace
+
+volumes:
+  codex-home:

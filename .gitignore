@@ -1,0 +1,12 @@
+# Secrets
+.env
+
+# Docker override files
+docker-compose.override.yml
+
+# Logs
+*.log
+
+# OS noise
+.DS_Store
+Thumbs.db
