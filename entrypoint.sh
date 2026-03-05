@@ -1,41 +1,35 @@
 #!/usr/bin/env bash
+# entrypoint.sh
 set -euo pipefail
 
 PUID="${PUID:-1000}"
 PGID="${PGID:-1000}"
 
-# Ensure Codex home exists
-mkdir -p /codex
-chown -R "${PUID}:${PGID}" /codex || true
+CODEX_HOME="${CODEX_HOME:-/codex}"
+HOME_DIR="${HOME:-/codex}"
 
-# Align HOME and CODEX_HOME
-export HOME=/codex
-export CODEX_HOME=/codex
+mkdir -p "${CODEX_HOME}"
+chown -R "${PUID}:${PGID}" "${CODEX_HOME}" || true
 
-# Ensure npm cache is writable
-export NPM_CONFIG_CACHE=/tmp/npm-cache
-mkdir -p "$NPM_CONFIG_CACHE"
-chown -R "${PUID}:${PGID}" "$NPM_CONFIG_CACHE" || true
+CONFIG_FILE="${CODEX_HOME}/config.toml"
 
-# Create Codex config if it doesn't exist
-CONFIG_FILE="/codex/config.toml"
-
-if [ ! -f "$CONFIG_FILE" ]; then
-cat <<EOF > "$CONFIG_FILE"
+# Create Codex config on first run (volume starts empty)
+if [ ! -f "${CONFIG_FILE}" ]; then
+  cat <<EOF > "${CONFIG_FILE}"
 approval_mode = "never"
 sandbox_mode = "workspace-write"
 
 [sandbox_workspace_write]
 network_access = true
 EOF
+  chown "${PUID}:${PGID}" "${CONFIG_FILE}" || true
 fi
 
-# Bootstrap GSD if not already installed
-if [ ! -f "/codex/gsd-file-manifest.json" ]; then
-  echo "Bootstrapping GSD into /codex"
-  gosu "${PUID}:${PGID}" env HOME=/codex CODEX_HOME=/codex \
+# Install GSD into CODEX_HOME on first run
+if [ ! -f "${CODEX_HOME}/gsd-file-manifest.json" ]; then
+  echo "Bootstrapping GSD into ${CODEX_HOME}"
+  gosu "${PUID}:${PGID}" env HOME="${HOME_DIR}" CODEX_HOME="${CODEX_HOME}" \
     npx -y get-shit-done-cc@latest --codex --global
 fi
 
-# Drop privileges and run the requested command
 exec gosu "${PUID}:${PGID}" "$@"

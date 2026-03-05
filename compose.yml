@@ -1,3 +1,4 @@
+# docker-compose.yml
 services:
   codex:
     build: .
@@ -8,6 +9,7 @@ services:
     environment:
       - CODEX_HOME=/codex
       - HOME=/codex
+      - NPM_CONFIG_CACHE=/tmp/npm-cache
       - PUID=${UID}
       - PGID=${GID}
 
@@ -16,6 +18,9 @@ services:
       - codex-state:/codex
 
     working_dir: /workspace
+
+    tmpfs:
+      - /tmp
 
 volumes:
   codex-state:
