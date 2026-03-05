@@ -4,23 +4,38 @@ set -euo pipefail
 PUID="${PUID:-1000}"
 PGID="${PGID:-1000}"
 
+# Ensure Codex home exists
 mkdir -p /codex
 chown -R "${PUID}:${PGID}" /codex || true
 
-# Make sure HOME is consistent, many tools still use $HOME/.codex
+# Align HOME and CODEX_HOME
 export HOME=/codex
 export CODEX_HOME=/codex
 
-# Optional: keep npm cache writable
+# Ensure npm cache is writable
 export NPM_CONFIG_CACHE=/tmp/npm-cache
 mkdir -p "$NPM_CONFIG_CACHE"
 chown -R "${PUID}:${PGID}" "$NPM_CONFIG_CACHE" || true
 
-# Install GSD into the active codex home if missing
-if [ ! -d /codex/get-shit-done ] && [ ! -f /codex/gsd-file-manifest.json ]; then
+# Create Codex config if it doesn't exist
+CONFIG_FILE="/codex/config.toml"
+
+if [ ! -f "$CONFIG_FILE" ]; then
+cat <<EOF > "$CONFIG_FILE"
+approval_mode = "never"
+sandbox_mode = "workspace-write"
+
+[sandbox_workspace_write]
+network_access = true
+EOF
+fi
+
+# Bootstrap GSD if not already installed
+if [ ! -f "/codex/gsd-file-manifest.json" ]; then
   echo "Bootstrapping GSD into /codex"
   gosu "${PUID}:${PGID}" env HOME=/codex CODEX_HOME=/codex \
     npx -y get-shit-done-cc@latest --codex --global
 fi
 
+# Drop privileges and run the requested command
 exec gosu "${PUID}:${PGID}" "$@"
