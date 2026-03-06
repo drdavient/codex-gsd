@@ -16,7 +16,7 @@ CONFIG_FILE="${CODEX_HOME}/config.toml"
 # Create Codex config on first run (volume starts empty)
 if [ ! -f "${CONFIG_FILE}" ]; then
   cat <<EOF > "${CONFIG_FILE}"
-approval_mode = "never"
+approval_policy = "never"
 sandbox_mode = "workspace-write"
 
 [sandbox_workspace_write]
